@@ -23,7 +23,8 @@ const state = {
   selectedPageId: null,
   selectedUserId: null,
   notice: '',
-  error: ''
+  error: '',
+  cart: loadCart()
 };
 
 const sectionDefaults = {
@@ -516,13 +517,30 @@ function renderGalleryEditor(section, sectionIndex) {
 
 function renderPublicSite() {
   const slug = getSlugFromLocation();
+  if (slug === 'cart') return renderCartPage();
   const page = state.site.pages.find((candidate) => candidate.slug === slug && candidate.status === 'published') || state.site.pages.find((candidate) => candidate.slug === 'home') || state.site.pages[0];
-  const navigation = (state.site.navigation || []).filter((item) => item.visible);
+  const navigation = getPublicNavigation();
   return `
     <main>
       <section class="site-hero-strip"><p>${escapeHtml(state.site.settings.siteName)}</p><div>${navigation.map((item) => `<a href="${escapeHtml(item.url)}">${escapeHtml(item.label)}</a>`).join('')}</div></section>
       ${page ? renderPage(page) : '<div class="empty-state">No published pages yet.</div>'}
     </main>`;
+}
+
+function getPublicNavigation() {
+  const navigation = (state.site.navigation || []).filter((item) => item.visible);
+  return isEcommerceEnabled() && !navigation.some((item) => item.url === '/cart')
+    ? [...navigation, { id: 'nav-cart', label: `Cart (${getCartCount()})`, url: '/cart', visible: true }]
+    : navigation;
+}
+
+function renderCartPage() {
+  const cartItems = state.cart.map((item) => ({ ...item, product: getPluginContentItems('ecommerce').find((product) => product.id === item.id) })).filter((item) => item.product);
+  const total = cartItems.reduce((sum, item) => sum + Number(item.product.price || 0) * item.quantity, 0).toFixed(2);
+  return `<main>
+    <section class="site-hero-strip"><p>${escapeHtml(state.site.settings.siteName)}</p><div>${getPublicNavigation().map((item) => `<a href="${escapeHtml(item.url)}">${escapeHtml(item.label)}</a>`).join('')}</div></section>
+    <section class="block cart-page"><h1>Cart</h1>${cartItems.length ? `<div class="cart-list">${cartItems.map((item) => `<article class="cart-row">${item.product.image ? `<img src="${escapeHtml(item.product.image)}" alt="${escapeHtml(item.product.name)}" />` : ''}<div><h2>${escapeHtml(item.product.name)}</h2><p>${escapeHtml(item.product.sku)} · $${escapeHtml(item.product.price)} · Qty ${item.quantity}</p></div><button class="text-button" data-cart-remove="${escapeHtml(item.id)}">Remove</button></article>`).join('')}</div><div class="cart-total"><strong>Total: $${total}</strong><button class="primary-action">Checkout</button></div>` : '<p class="hint">Your cart is empty.</p>'}</section>
+  </main>`;
 }
 
 function renderPage(page) {
@@ -555,7 +573,27 @@ function renderPluginContentSection(section) {
   const items = getFilteredPluginItems(section);
   const isProducts = section.plugin === 'ecommerce';
   return `<section id="section-${escapeHtml(section.id || 'plugin-content')}" class="block plugin-content-block"><h2>${escapeHtml(section.headline)}</h2><div class="plugin-content-grid">${items.map((item) => `
-    <article class="plugin-content-card">${isProducts && item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" />` : ''}<h3>${escapeHtml(item.title || item.name)}</h3>${isProducts ? `<p>SKU: ${escapeHtml(item.sku)} · $${escapeHtml(item.price)}</p>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}` : `<p>${escapeHtml(item.author)} · ${escapeHtml(item.status)}</p>`}${item.category ? `<small>${escapeHtml(item.category)}</small>` : ''}</article>`).join('') || '<p class="hint">No matching content found.</p>'}</div></section>`;
+    <article class="plugin-content-card">${isProducts && item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" />` : ''}<h3>${escapeHtml(item.title || item.name)}</h3>${isProducts ? `<p>SKU: ${escapeHtml(item.sku)} · $${escapeHtml(item.price)}</p>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}${isEcommerceEnabled() ? `<button class="primary-action" data-add-cart="${escapeHtml(item.id)}">Add to cart</button>` : ''}` : `<p>${escapeHtml(item.author)} · ${escapeHtml(item.status)}</p>`}${item.category ? `<small>${escapeHtml(item.category)}</small>` : ''}</article>`).join('') || '<p class="hint">No matching content found.</p>'}</div></section>`;
+}
+
+function isEcommerceEnabled() {
+  return Boolean(state.site.plugins.find((plugin) => plugin.id === 'ecommerce' && plugin.enabled));
+}
+
+function getCartCount() {
+  return state.cart.reduce((sum, item) => sum + item.quantity, 0);
+}
+
+function loadCart() {
+  try {
+    return JSON.parse(localStorage.getItem('webux_cart') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveCart() {
+  localStorage.setItem('webux_cart', JSON.stringify(state.cart));
 }
 
 function getFilteredPluginItems(section) {
@@ -587,6 +625,8 @@ function bindNavigation() {
     render();
   }));
   document.querySelector('[data-logout]')?.addEventListener('click', logout);
+  document.querySelectorAll('[data-add-cart]').forEach((button) => button.addEventListener('click', () => addToCart(button.dataset.addCart)));
+  document.querySelectorAll('[data-cart-remove]').forEach((button) => button.addEventListener('click', () => removeFromCart(button.dataset.cartRemove)));
 }
 
 function bindAdmin() {
@@ -750,6 +790,20 @@ function showError(message) {
   state.error = message;
   render();
   setTimeout(() => { state.error = ''; render(); }, 3000);
+}
+
+function addToCart(productId) {
+  const existing = state.cart.find((item) => item.id === productId);
+  if (existing) existing.quantity += 1;
+  else state.cart.push({ id: productId, quantity: 1 });
+  saveCart();
+  showNotice('Added to cart');
+}
+
+function removeFromCart(productId) {
+  state.cart = state.cart.filter((item) => item.id !== productId);
+  saveCart();
+  render();
 }
 
 async function login(event) {

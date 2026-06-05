@@ -162,3 +162,10 @@ code { background: #eef2ff; border-radius: 7px; color: #3b45a0; padding: 2px 6px
 .admin-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.28); border-radius: 999px; }
 .plugin-content-card img { aspect-ratio: 16 / 10; border-radius: 16px; margin-bottom: 12px; object-fit: cover; width: 100%; }
 .plugin-data-row { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) auto; }
+.cart-page h1 { font-size: clamp(2.6rem, 6vw, 4.8rem); margin-top: 0; }
+.cart-list { display: grid; gap: 14px; margin-bottom: 22px; }
+.cart-row { align-items: center; background: #fff; border: 1px solid #e5e9f1; border-radius: 22px; display: grid; gap: 14px; grid-template-columns: 110px 1fr auto; padding: 14px; }
+.cart-row img { aspect-ratio: 1; border-radius: 16px; object-fit: cover; width: 100%; }
+.cart-row h2 { margin: 0 0 6px; }
+.cart-total { align-items: center; display: flex; gap: 14px; justify-content: flex-end; }
+@media (max-width: 720px) { .cart-row { grid-template-columns: 1fr; } .cart-total { align-items: flex-start; flex-direction: column; } }
