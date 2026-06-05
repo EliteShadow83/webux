@@ -1,0 +1,71 @@
+{
+  "settings": {
+    "siteName": "WebUX Studio",
+    "tagline": "Build beautiful pages without code",
+    "primaryColor": "#6d5dfc",
+    "accentColor": "#18b892",
+    "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+  },
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "slug": "home",
+      "status": "published",
+      "updatedAt": "2026-06-05T00:00:00.000Z",
+      "sections": [
+        {
+          "id": "hero-1",
+          "type": "hero",
+          "eyebrow": "No-code CMS",
+          "headline": "Launch customizable pages in minutes.",
+          "body": "WebUX gives teams a WordPress-inspired editor, reusable content blocks, live previews, and a JSON API for every page.",
+          "buttonLabel": "Open editor",
+          "buttonUrl": "/admin"
+        },
+        {
+          "id": "features-1",
+          "type": "features",
+          "headline": "Everything you need to shape your site",
+          "items": [
+            {
+              "title": "Visual block editor",
+              "body": "Stack hero, text, features, gallery, and CTA sections in any order."
+            },
+            {
+              "title": "Publish workflow",
+              "body": "Draft pages privately, then publish when they are ready."
+            },
+            {
+              "title": "Theme controls",
+              "body": "Change global brand colors, typography, and site metadata."
+            }
+          ]
+        },
+        {
+          "id": "cta-1",
+          "type": "cta",
+          "headline": "Ready to create your first page?",
+          "body": "Use the admin dashboard to add sections, edit content, and preview your work.",
+          "buttonLabel": "Start building",
+          "buttonUrl": "/admin"
+        }
+      ]
+    },
+    {
+      "id": "about",
+      "title": "About",
+      "slug": "about",
+      "status": "published",
+      "updatedAt": "2026-06-05T00:00:00.000Z",
+      "sections": [
+        {
+          "id": "text-1",
+          "type": "text",
+          "headline": "A lightweight CMS starter",
+          "body": "This project includes a file-backed Node.js API and a vanilla JavaScript frontend for managing custom pages. Extend it with authentication, media uploads, and database storage as your needs grow."
+        }
+      ]
+    }
+  ]
+}
