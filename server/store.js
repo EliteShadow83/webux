@@ -80,10 +80,10 @@ const defaultPluginData = {
   },
   ecommerce: {
     products: [
-      { id: 'product-starter', name: 'Starter Kit', sku: 'STARTER-001', price: '49.00', status: 'active', category: 'Kits' }
+      { id: 'product-starter', name: 'Starter Kit', sku: 'STARTER-001', price: '49.00', status: 'active', category: 'Kits', description: 'A starter bundle for launching your first storefront.', image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80' }
     ],
     inventory: [
-      { id: 'inventory-starter', sku: 'STARTER-001', location: 'Main warehouse', quantity: '25', threshold: '5' }
+      { id: 'inventory-starter', sku: 'STARTER-001', location: 'Main warehouse', quantity: '25', threshold: '5', description: 'Starter Kit inventory for boxed launch bundles.', image: 'https://images.unsplash.com/photo-1581091215367-59ab6b01f302?auto=format&fit=crop&w=900&q=80' }
     ],
     orders: [
       { id: 'order-1001', orderNumber: '#1001', customer: 'Jane Customer', total: '49.00', status: 'processing' }

@@ -157,3 +157,8 @@ code { background: #eef2ff; border-radius: 7px; color: #3b45a0; padding: 2px 6px
 .plugin-content-card h3 { margin: 0 0 8px; }
 .plugin-content-card p, .plugin-content-card small { color: #667085; }
 @media (max-width: 900px) { .plugin-content-grid { grid-template-columns: 1fr; } }
+.admin-nav { align-content: start; max-height: calc(100vh - 112px); overflow-y: auto; scrollbar-color: rgba(255,255,255,.32) transparent; }
+.admin-nav::-webkit-scrollbar { width: 8px; }
+.admin-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.28); border-radius: 999px; }
+.plugin-content-card img { aspect-ratio: 16 / 10; border-radius: 16px; margin-bottom: 12px; object-fit: cover; width: 100%; }
+.plugin-data-row { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) auto; }
