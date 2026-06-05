@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createId, publicUser, readSite, sanitizeNavigationItem, sanitizePage, sanitizePlugin, sanitizeUser, writeSite } from './store.js';
+import { createId, normalizePluginData, publicUser, readSite, sanitizeNavigationItem, sanitizePage, sanitizePlugin, sanitizeUser, writeSite } from './store.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicPath = path.join(__dirname, '..', 'public');
@@ -104,6 +104,12 @@ async function handleApi(request, response) {
     return;
   }
 
+  if (request.method === 'GET' && url.pathname === '/api/plugin-data') {
+    const site = await readSite();
+    sendJson(response, 200, site.pluginData);
+    return;
+  }
+
   if (segments[1] === 'pages' && segments[2] && request.method === 'GET') {
     await handlePageRoute(request, response, segments[2]);
     return;
@@ -159,6 +165,14 @@ async function handleApi(request, response) {
     site.plugins = (await readJson(request)).map(sanitizePlugin);
     await writeSite(site);
     sendJson(response, 200, site.plugins);
+    return;
+  }
+
+  if (request.method === 'PUT' && url.pathname === '/api/plugin-data') {
+    const site = await readSite();
+    site.pluginData = normalizePluginData(await readJson(request));
+    await writeSite(site);
+    sendJson(response, 200, site.pluginData);
     return;
   }
 

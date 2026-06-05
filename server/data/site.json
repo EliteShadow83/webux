@@ -188,5 +188,102 @@
         "defaultShippingZone": "Domestic"
       }
     }
-  ]
+  ],
+  "pluginData": {
+    "forms": {
+      "forms": [
+        {
+          "id": "form-contact",
+          "name": "Contact form",
+          "fields": "Name, Email, Message",
+          "destination": "hello@example.com"
+        }
+      ]
+    },
+    "analytics": {
+      "dashboards": [
+        {
+          "id": "metric-views",
+          "metric": "Page views",
+          "value": "1,240",
+          "period": "Last 30 days"
+        },
+        {
+          "id": "metric-conversions",
+          "metric": "Conversions",
+          "value": "38",
+          "period": "Last 30 days"
+        }
+      ]
+    },
+    "blog": {
+      "posts": [
+        {
+          "id": "post-welcome",
+          "title": "Welcome to WebUX",
+          "slug": "welcome-to-webux",
+          "author": "Site Administrator",
+          "status": "draft"
+        }
+      ]
+    },
+    "payments": {
+      "links": [
+        {
+          "id": "pay-consulting",
+          "name": "Consulting session",
+          "amount": "199.00",
+          "currency": "USD",
+          "status": "active"
+        }
+      ]
+    },
+    "ecommerce": {
+      "products": [
+        {
+          "id": "product-starter",
+          "name": "Starter Kit",
+          "sku": "STARTER-001",
+          "price": "49.00",
+          "status": "active"
+        }
+      ],
+      "inventory": [
+        {
+          "id": "inventory-starter",
+          "sku": "STARTER-001",
+          "location": "Main warehouse",
+          "quantity": "25",
+          "threshold": "5"
+        }
+      ],
+      "orders": [
+        {
+          "id": "order-1001",
+          "orderNumber": "#1001",
+          "customer": "Jane Customer",
+          "total": "49.00",
+          "status": "processing"
+        }
+      ],
+      "coupons": [
+        {
+          "id": "coupon-welcome",
+          "code": "WELCOME10",
+          "discount": "10%",
+          "status": "active",
+          "expires": "2026-12-31"
+        }
+      ],
+      "shipping": [
+        {
+          "id": "shipping-standard",
+          "zone": "Domestic",
+          "method": "Standard",
+          "rate": "7.95",
+          "status": "active"
+        }
+      ]
+    }
+  }
 }

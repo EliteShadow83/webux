@@ -55,6 +55,48 @@ const defaultPlugins = [
   }
 ];
 
+
+const defaultPluginData = {
+  forms: {
+    forms: [
+      { id: 'form-contact', name: 'Contact form', fields: 'Name, Email, Message', destination: 'hello@example.com' }
+    ]
+  },
+  analytics: {
+    dashboards: [
+      { id: 'metric-views', metric: 'Page views', value: '1,240', period: 'Last 30 days' },
+      { id: 'metric-conversions', metric: 'Conversions', value: '38', period: 'Last 30 days' }
+    ]
+  },
+  blog: {
+    posts: [
+      { id: 'post-welcome', title: 'Welcome to WebUX', slug: 'welcome-to-webux', author: 'Site Administrator', status: 'draft' }
+    ]
+  },
+  payments: {
+    links: [
+      { id: 'pay-consulting', name: 'Consulting session', amount: '199.00', currency: 'USD', status: 'active' }
+    ]
+  },
+  ecommerce: {
+    products: [
+      { id: 'product-starter', name: 'Starter Kit', sku: 'STARTER-001', price: '49.00', status: 'active' }
+    ],
+    inventory: [
+      { id: 'inventory-starter', sku: 'STARTER-001', location: 'Main warehouse', quantity: '25', threshold: '5' }
+    ],
+    orders: [
+      { id: 'order-1001', orderNumber: '#1001', customer: 'Jane Customer', total: '49.00', status: 'processing' }
+    ],
+    coupons: [
+      { id: 'coupon-welcome', code: 'WELCOME10', discount: '10%', status: 'active', expires: '2026-12-31' }
+    ],
+    shipping: [
+      { id: 'shipping-standard', zone: 'Domestic', method: 'Standard', rate: '7.95', status: 'active' }
+    ]
+  }
+};
+
 const allowedLayouts = new Set(['standard', 'centered', 'sidebar', 'landing']);
 const allowedRoles = new Set(['Administrator', 'Editor', 'Author', 'Viewer']);
 
@@ -64,7 +106,8 @@ const defaultSite = {
   media: [],
   users: defaultUsers,
   navigation: [],
-  plugins: defaultPlugins
+  plugins: defaultPlugins,
+  pluginData: defaultPluginData
 };
 
 export async function readSite() {
@@ -98,7 +141,8 @@ export function normalizeSite(site) {
     media: Array.isArray(site.media) ? site.media : [],
     users: Array.isArray(site.users) && site.users.length ? site.users.map(sanitizeUser) : defaultUsers,
     navigation: Array.isArray(site.navigation) && site.navigation.length ? site.navigation.map(sanitizeNavigationItem) : pages.map((page) => ({ id: createId('nav'), label: page.title, url: `/${page.slug}`, visible: page.status === 'published' })),
-    plugins: mergePlugins(site.plugins)
+    plugins: mergePlugins(site.plugins),
+    pluginData: normalizePluginData(site.pluginData)
   };
 }
 
@@ -215,4 +259,24 @@ function mergeEcommerceFeatures(features = []) {
     ...feature,
     enabled: incoming.find((candidate) => candidate.id === feature.id)?.enabled ?? feature.enabled
   }));
+}
+
+
+export function normalizePluginData(pluginData = {}) {
+  const normalized = structuredClone(defaultPluginData);
+  for (const [pluginId, collections] of Object.entries(pluginData || {})) {
+    if (!normalized[pluginId] || typeof collections !== 'object') continue;
+    for (const [collectionName, items] of Object.entries(collections)) {
+      if (!Array.isArray(normalized[pluginId][collectionName]) || !Array.isArray(items)) continue;
+      normalized[pluginId][collectionName] = items.map((item) => sanitizePluginDataItem(item, collectionName));
+    }
+  }
+  return normalized;
+}
+
+function sanitizePluginDataItem(item = {}, collectionName = 'item') {
+  const id = item.id || createId(collectionName);
+  return Object.fromEntries(
+    Object.entries({ id, ...item }).map(([key, value]) => [key, typeof value === 'boolean' ? value : String(value ?? '')])
+  );
 }

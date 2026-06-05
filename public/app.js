@@ -80,6 +80,7 @@ const api = {
   updateUser: (user) => request(`/api/users/${user.id}`, { method: 'PUT', body: user }),
   updateNavigation: (items) => request('/api/navigation', { method: 'PUT', body: items }),
   updatePlugins: (plugins) => request('/api/plugins', { method: 'PUT', body: plugins }),
+  updatePluginData: (pluginData) => request('/api/plugin-data', { method: 'PUT', body: pluginData }),
   uploadMedia: (formData) => fetch('/api/media', { method: 'POST', body: formData }).then((response) => {
     if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
     return response.json();
@@ -158,6 +159,7 @@ function renderAdmin() {
         <strong>Admin</strong>
         ${adminSections.map((section) => `<button class="${state.adminSection === section.id ? 'selected' : ''}" data-admin-section="${section.id}"><span>${section.icon}</span>${section.label}</button>`).join('')}
         ${renderEnabledPluginNav()}
+        ${renderEnabledPluginPages()}
       </aside>
       <section class="admin-workspace">${renderAdminSection()}</section>
     </main>`;
@@ -169,7 +171,17 @@ function renderEnabledPluginNav() {
   return `<div class="admin-nav-group"><span>Plugin settings</span>${enabledPlugins.map((plugin) => `<button class="${state.adminSection === `plugin-settings:${plugin.id}` ? 'selected' : ''}" data-admin-section="plugin-settings:${plugin.id}"><span>▣</span>${escapeHtml(plugin.name)} Settings</button>`).join('')}</div>`;
 }
 
+function renderEnabledPluginPages() {
+  const pages = getEnabledPluginPages();
+  if (!pages.length) return '';
+  return `<div class="admin-nav-group"><span>Plugin pages</span>${pages.map((page) => `<button class="${state.adminSection === `plugin-page:${page.pluginId}:${page.pageId}` ? 'selected' : ''}" data-admin-section="plugin-page:${page.pluginId}:${page.pageId}"><span>${page.icon}</span>${escapeHtml(page.label)}</button>`).join('')}</div>`;
+}
+
 function renderAdminSection() {
+  if (state.adminSection.startsWith('plugin-page:')) {
+    const [, pluginId, pageId] = state.adminSection.split(':');
+    return renderPluginFeaturePage(pluginId, pageId);
+  }
   if (state.adminSection.startsWith('plugin-settings:')) return renderPluginSettingsPage(state.adminSection.split(':')[1]);
   if (state.adminSection === 'content') return renderContentManagement();
   if (state.adminSection === 'media') return renderMediaLibrary(true);
@@ -367,6 +379,67 @@ function renderPluginSettingsFields(plugin) {
   return '<p class="hint">No settings are available for this plugin yet.</p>';
 }
 
+function getEnabledPluginPages() {
+  const pages = [];
+  const enabled = (id) => state.site.plugins.find((plugin) => plugin.id === id && plugin.enabled);
+  if (enabled('forms')) pages.push({ pluginId: 'forms', pageId: 'forms', label: 'Forms', icon: '▤' });
+  if (enabled('analytics')) pages.push({ pluginId: 'analytics', pageId: 'dashboards', label: 'Analytics Dashboard', icon: '◷' });
+  if (enabled('blog')) pages.push({ pluginId: 'blog', pageId: 'posts', label: 'Blog Posts', icon: '✎' });
+  if (enabled('payments')) pages.push({ pluginId: 'payments', pageId: 'links', label: 'Payment Links', icon: '$' });
+
+  const ecommerce = enabled('ecommerce');
+  if (ecommerce) {
+    (ecommerce.features || []).filter((feature) => feature.enabled).forEach((feature) => {
+      const labels = { products: 'Products', inventory: 'Inventory', orders: 'Orders', coupons: 'Coupons', shipping: 'Shipping' };
+      pages.push({ pluginId: 'ecommerce', pageId: feature.id, label: labels[feature.id] || feature.name, icon: '◼' });
+    });
+  }
+
+  return pages;
+}
+
+function getPluginPageConfig(pluginId, pageId) {
+  const configs = {
+    forms: {
+      forms: { title: 'Forms', description: 'Build forms and route submissions.', collection: 'forms', addLabel: 'New form', fields: [['name', 'Name'], ['fields', 'Fields'], ['destination', 'Destination']], defaults: { name: 'New form', fields: 'Name, Email', destination: 'hello@example.com' } }
+    },
+    analytics: {
+      dashboards: { title: 'Analytics Dashboard', description: 'Track metrics surfaced by your analytics plugin.', collection: 'dashboards', addLabel: 'New metric', fields: [['metric', 'Metric'], ['value', 'Value'], ['period', 'Period']], defaults: { metric: 'New metric', value: '0', period: 'Today' } }
+    },
+    blog: {
+      posts: { title: 'Blog Posts', description: 'Create and manage blog posts.', collection: 'posts', addLabel: 'New post', fields: [['title', 'Title'], ['slug', 'Slug'], ['author', 'Author'], ['status', 'Status']], defaults: { title: 'New post', slug: 'new-post', author: 'Site Administrator', status: 'draft' } }
+    },
+    payments: {
+      links: { title: 'Payment Links', description: 'Create reusable payment links.', collection: 'links', addLabel: 'New payment link', fields: [['name', 'Name'], ['amount', 'Amount'], ['currency', 'Currency'], ['status', 'Status']], defaults: { name: 'New payment link', amount: '0.00', currency: 'USD', status: 'active' } }
+    },
+    ecommerce: {
+      products: { title: 'Products', description: 'Create and edit products for your storefront.', collection: 'products', addLabel: 'New product', fields: [['name', 'Name'], ['sku', 'SKU'], ['price', 'Price'], ['status', 'Status']], defaults: { name: 'New product', sku: 'SKU-001', price: '0.00', status: 'active' } },
+      inventory: { title: 'Inventory', description: 'Track stock levels and reorder thresholds.', collection: 'inventory', addLabel: 'New inventory row', fields: [['sku', 'SKU'], ['location', 'Location'], ['quantity', 'Quantity'], ['threshold', 'Threshold']], defaults: { sku: 'SKU-001', location: 'Main warehouse', quantity: '0', threshold: '0' } },
+      orders: { title: 'Orders', description: 'View and update customer orders.', collection: 'orders', addLabel: 'New order', fields: [['orderNumber', 'Order #'], ['customer', 'Customer'], ['total', 'Total'], ['status', 'Status']], defaults: { orderNumber: '#1002', customer: 'New customer', total: '0.00', status: 'pending' } },
+      coupons: { title: 'Coupons', description: 'Create discounts and coupon codes.', collection: 'coupons', addLabel: 'New coupon', fields: [['code', 'Code'], ['discount', 'Discount'], ['status', 'Status'], ['expires', 'Expires']], defaults: { code: 'SAVE10', discount: '10%', status: 'active', expires: '2026-12-31' } },
+      shipping: { title: 'Shipping', description: 'Configure shipping zones, methods, and rates.', collection: 'shipping', addLabel: 'New shipping method', fields: [['zone', 'Zone'], ['method', 'Method'], ['rate', 'Rate'], ['status', 'Status']], defaults: { zone: 'Domestic', method: 'Standard', rate: '0.00', status: 'active' } }
+    }
+  };
+  return configs[pluginId]?.[pageId];
+}
+
+function renderPluginFeaturePage(pluginId, pageId) {
+  const config = getPluginPageConfig(pluginId, pageId);
+  if (!config) return '<section class="empty-state">Plugin page not found.</section>';
+  const pluginData = state.site.pluginData?.[pluginId] || {};
+  const items = pluginData[config.collection] || [];
+
+  return `
+    <div class="admin-section-header"><div><h1>${escapeHtml(config.title)}</h1><p>${escapeHtml(config.description)}</p></div><div class="toolbar-actions"><button class="primary-action" data-plugin-data-add="${pluginId}:${pageId}">＋ ${escapeHtml(config.addLabel)}</button><button class="primary-action" data-save-plugin-data>💾 Save page</button></div></div>
+    <section class="panel-card plugin-data-page">
+      ${items.map((item, itemIndex) => `
+        <article class="plugin-data-row">
+          ${config.fields.map(([field, label]) => `<label>${escapeHtml(label)}<input data-plugin-data-field="${pluginId}:${config.collection}:${itemIndex}:${field}" value="${escapeHtml(item[field])}" /></label>`).join('')}
+          <button class="text-button" data-plugin-data-remove="${pluginId}:${config.collection}:${itemIndex}">Remove</button>
+        </article>`).join('') || '<p class="hint">No records yet. Add one to get started.</p>'}
+    </section>`;
+}
+
 function renderPageEditor(page) {
   return `
     <section class="editor-grid">
@@ -494,6 +567,7 @@ function bindAdmin() {
   if (state.adminSection === 'navigation') bindNavigationBuilder();
   if (state.adminSection === 'plugins') bindPlugins();
   if (state.adminSection.startsWith('plugin-settings:')) bindPluginSettings();
+  if (state.adminSection.startsWith('plugin-page:')) bindPluginFeaturePage();
 }
 
 function bindContentManagement() {
@@ -540,6 +614,33 @@ function bindNavigationBuilder() {
   document.querySelectorAll('[data-nav-url]').forEach((input) => input.addEventListener('input', () => { state.site.navigation[Number(input.dataset.navUrl)].url = input.value; }));
   document.querySelectorAll('[data-nav-visible]').forEach((input) => input.addEventListener('change', () => { state.site.navigation[Number(input.dataset.navVisible)].visible = input.checked; }));
   document.querySelectorAll('[data-remove-nav]').forEach((button) => button.addEventListener('click', () => { state.site.navigation.splice(Number(button.dataset.removeNav), 1); render(); }));
+}
+
+function bindPluginFeaturePage() {
+  document.querySelector('[data-save-plugin-data]')?.addEventListener('click', savePluginData);
+  document.querySelector('[data-plugin-data-add]')?.addEventListener('click', (event) => {
+    const [pluginId, pageId] = event.currentTarget.dataset.pluginDataAdd.split(':');
+    const config = getPluginPageConfig(pluginId, pageId);
+    const collection = ensurePluginCollection(pluginId, config.collection);
+    collection.push({ id: `${config.collection}-${Date.now()}`, ...config.defaults });
+    render();
+  });
+  document.querySelectorAll('[data-plugin-data-remove]').forEach((button) => button.addEventListener('click', () => {
+    const [pluginId, collectionName, itemIndex] = button.dataset.pluginDataRemove.split(':');
+    ensurePluginCollection(pluginId, collectionName).splice(Number(itemIndex), 1);
+    render();
+  }));
+  document.querySelectorAll('[data-plugin-data-field]').forEach((input) => input.addEventListener('input', () => {
+    const [pluginId, collectionName, itemIndex, field] = input.dataset.pluginDataField.split(':');
+    ensurePluginCollection(pluginId, collectionName)[Number(itemIndex)][field] = input.value;
+  }));
+}
+
+function ensurePluginCollection(pluginId, collectionName) {
+  state.site.pluginData = state.site.pluginData || {};
+  state.site.pluginData[pluginId] = state.site.pluginData[pluginId] || {};
+  state.site.pluginData[pluginId][collectionName] = state.site.pluginData[pluginId][collectionName] || [];
+  return state.site.pluginData[pluginId][collectionName];
 }
 
 function bindPluginSettings() {
@@ -686,6 +787,11 @@ async function saveNavigation() {
 async function savePlugins() {
   state.site.plugins = await api.updatePlugins(state.site.plugins);
   showNotice('Plugin settings saved');
+}
+
+async function savePluginData() {
+  state.site.pluginData = await api.updatePluginData(state.site.pluginData || {});
+  showNotice('Plugin page saved');
 }
 
 function updateFeature(input, fieldName) {

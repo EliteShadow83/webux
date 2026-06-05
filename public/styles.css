@@ -148,3 +148,6 @@ code { background: #eef2ff; border-radius: 7px; color: #3b45a0; padding: 2px 6px
 .admin-nav-group > span { color: #94a3b8; font-size: .78rem; font-weight: 900; letter-spacing: .08em; padding: 0 14px; text-transform: uppercase; }
 .plugin-settings-card { display: grid; gap: 14px; max-width: 760px; }
 .settings-features { margin-top: 4px; }
+.plugin-data-page { display: grid; gap: 14px; }
+.plugin-data-row { align-items: end; background: #fbfcff; border: 1px solid #e6eaf2; border-radius: 20px; display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(120px, 1fr)) auto; padding: 14px; }
+@media (max-width: 900px) { .plugin-data-row { grid-template-columns: 1fr; } }

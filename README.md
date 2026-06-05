@@ -16,6 +16,7 @@ WebUX CMS is a WordPress-inspired full-stack starter for building customizable m
 - Build public navigation links and toggle Forms, Analytics, Blog, Payments, and Ecommerce plugins from the dedicated Plugins section.
 - Configure Ecommerce plugin features for Products, Inventory, Orders, Coupons, and Shipping.
 - Open a dedicated settings page for every enabled plugin from the admin left navigation.
+- Use enabled plugin feature pages for Forms, Analytics dashboards, Blog posts, Payment links, and Ecommerce Products, Inventory, Orders, Coupons, and Shipping.
 - Protect admin editing routes with a simple session login.
 - Serve the frontend and JSON API from the same backend.
 - Run without third-party runtime dependencies.
@@ -62,5 +63,7 @@ npm start
 | `PUT` | `/api/navigation` | Replace navigation links. | Yes |
 | `GET` | `/api/plugins` | List plugins. | No |
 | `PUT` | `/api/plugins` | Toggle or edit plugin records. | Yes |
+| `GET` | `/api/plugin-data` | Return plugin feature records. | No |
+| `PUT` | `/api/plugin-data` | Save plugin feature records. | Yes |
 
-Content is stored in `server/data/site.json`, including each page's `layout` value plus users, navigation links, and plugin settings. Uploaded files are stored in `public/uploads/`, which makes the project easy to inspect and migrate to a database or object storage later.
+Content is stored in `server/data/site.json`, including each page's `layout` value plus users, navigation links, plugin settings, and plugin feature records. Uploaded files are stored in `public/uploads/`, which makes the project easy to inspect and migrate to a database or object storage later.
