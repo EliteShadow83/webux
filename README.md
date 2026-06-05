@@ -15,6 +15,7 @@ WebUX CMS is a WordPress-inspired full-stack starter for building customizable m
 - Create, view, and edit users from User Management.
 - Build public navigation links and toggle Forms, Analytics, Blog, Payments, and Ecommerce plugins from the dedicated Plugins section.
 - Configure Ecommerce plugin features for Products, Inventory, Orders, Coupons, and Shipping.
+- Open a dedicated settings page for every enabled plugin from the admin left navigation.
 - Protect admin editing routes with a simple session login.
 - Serve the frontend and JSON API from the same backend.
 - Run without third-party runtime dependencies.

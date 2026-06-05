@@ -157,12 +157,20 @@ function renderAdmin() {
       <aside class="admin-nav">
         <strong>Admin</strong>
         ${adminSections.map((section) => `<button class="${state.adminSection === section.id ? 'selected' : ''}" data-admin-section="${section.id}"><span>${section.icon}</span>${section.label}</button>`).join('')}
+        ${renderEnabledPluginNav()}
       </aside>
       <section class="admin-workspace">${renderAdminSection()}</section>
     </main>`;
 }
 
+function renderEnabledPluginNav() {
+  const enabledPlugins = state.site.plugins.filter((plugin) => plugin.enabled);
+  if (!enabledPlugins.length) return '';
+  return `<div class="admin-nav-group"><span>Plugin settings</span>${enabledPlugins.map((plugin) => `<button class="${state.adminSection === `plugin-settings:${plugin.id}` ? 'selected' : ''}" data-admin-section="plugin-settings:${plugin.id}"><span>▣</span>${escapeHtml(plugin.name)} Settings</button>`).join('')}</div>`;
+}
+
 function renderAdminSection() {
+  if (state.adminSection.startsWith('plugin-settings:')) return renderPluginSettingsPage(state.adminSection.split(':')[1]);
   if (state.adminSection === 'content') return renderContentManagement();
   if (state.adminSection === 'media') return renderMediaLibrary(true);
   if (state.adminSection === 'theme') return renderThemeEditor(true);
@@ -316,6 +324,49 @@ function renderPluginFeatures(plugin, pluginIndex) {
     <label class="checkbox-label"><input type="checkbox" data-plugin-feature="${pluginIndex}:${featureIndex}" ${feature.enabled ? 'checked' : ''} /> ${escapeHtml(feature.name)}</label>`).join('')}</div>`;
 }
 
+function renderPluginSettingsPage(pluginId) {
+  const plugin = state.site.plugins.find((candidate) => candidate.id === pluginId);
+  if (!plugin || !plugin.enabled) return '<section class="empty-state">Enable this plugin to manage its settings.</section>';
+
+  return `
+    <div class="admin-section-header"><div><h1>${escapeHtml(plugin.name)} Settings</h1><p>Configure settings for the enabled ${escapeHtml(plugin.name)} plugin.</p></div><button class="primary-action" data-save-plugin-settings>💾 Save settings</button></div>
+    <section class="panel-card plugin-settings-card">
+      ${renderPluginSettingsFields(plugin)}
+    </section>`;
+}
+
+function renderPluginSettingsFields(plugin) {
+  if (plugin.id === 'forms') {
+    return `
+      <label>Recipient email<input data-plugin-setting="recipientEmail" value="${escapeHtml(plugin.settings?.recipientEmail)}" /></label>
+      <label>Success message<textarea data-plugin-setting="successMessage">${escapeHtml(plugin.settings?.successMessage)}</textarea></label>`;
+  }
+  if (plugin.id === 'analytics') {
+    return `
+      <label>Provider<input data-plugin-setting="provider" value="${escapeHtml(plugin.settings?.provider)}" /></label>
+      <label>Measurement ID<input data-plugin-setting="measurementId" value="${escapeHtml(plugin.settings?.measurementId)}" placeholder="G-XXXXXXXXXX" /></label>`;
+  }
+  if (plugin.id === 'blog') {
+    return `
+      <label>Posts per page<input data-plugin-setting="postsPerPage" type="number" min="1" value="${escapeHtml(plugin.settings?.postsPerPage)}" /></label>
+      <label class="checkbox-label"><input type="checkbox" data-plugin-setting-checkbox="showAuthors" ${plugin.settings?.showAuthors ? 'checked' : ''} /> Show authors</label>`;
+  }
+  if (plugin.id === 'payments') {
+    return `
+      <label>Currency<input data-plugin-setting="currency" value="${escapeHtml(plugin.settings?.currency)}" /></label>
+      <label class="checkbox-label"><input type="checkbox" data-plugin-setting-checkbox="testMode" ${plugin.settings?.testMode ? 'checked' : ''} /> Test mode</label>`;
+  }
+  if (plugin.id === 'ecommerce') {
+    return `
+      <label>Store name<input data-plugin-setting="storeName" value="${escapeHtml(plugin.settings?.storeName)}" /></label>
+      <label>Default shipping zone<input data-plugin-setting="defaultShippingZone" value="${escapeHtml(plugin.settings?.defaultShippingZone)}" /></label>
+      <label class="checkbox-label"><input type="checkbox" data-plugin-setting-checkbox="inventoryAlerts" ${plugin.settings?.inventoryAlerts ? 'checked' : ''} /> Inventory alerts</label>
+      <div class="plugin-features settings-features"><strong>Ecommerce modules</strong>${(plugin.features || []).map((feature, featureIndex) => `
+        <label class="checkbox-label"><input type="checkbox" data-plugin-settings-feature="${featureIndex}" ${feature.enabled ? 'checked' : ''} /> ${escapeHtml(feature.name)}</label>`).join('')}</div>`;
+  }
+  return '<p class="hint">No settings are available for this plugin yet.</p>';
+}
+
 function renderPageEditor(page) {
   return `
     <section class="editor-grid">
@@ -442,6 +493,7 @@ function bindAdmin() {
   if (state.adminSection === 'users') bindUsers();
   if (state.adminSection === 'navigation') bindNavigationBuilder();
   if (state.adminSection === 'plugins') bindPlugins();
+  if (state.adminSection.startsWith('plugin-settings:')) bindPluginSettings();
 }
 
 function bindContentManagement() {
@@ -488,6 +540,23 @@ function bindNavigationBuilder() {
   document.querySelectorAll('[data-nav-url]').forEach((input) => input.addEventListener('input', () => { state.site.navigation[Number(input.dataset.navUrl)].url = input.value; }));
   document.querySelectorAll('[data-nav-visible]').forEach((input) => input.addEventListener('change', () => { state.site.navigation[Number(input.dataset.navVisible)].visible = input.checked; }));
   document.querySelectorAll('[data-remove-nav]').forEach((button) => button.addEventListener('click', () => { state.site.navigation.splice(Number(button.dataset.removeNav), 1); render(); }));
+}
+
+function bindPluginSettings() {
+  const pluginId = state.adminSection.split(':')[1];
+  const plugin = state.site.plugins.find((candidate) => candidate.id === pluginId);
+  if (!plugin) return;
+
+  document.querySelectorAll('[data-plugin-setting]').forEach((input) => input.addEventListener('input', () => {
+    plugin.settings = { ...(plugin.settings || {}), [input.dataset.pluginSetting]: input.value };
+  }));
+  document.querySelectorAll('[data-plugin-setting-checkbox]').forEach((input) => input.addEventListener('change', () => {
+    plugin.settings = { ...(plugin.settings || {}), [input.dataset.pluginSettingCheckbox]: input.checked };
+  }));
+  document.querySelectorAll('[data-plugin-settings-feature]').forEach((input) => input.addEventListener('change', () => {
+    plugin.features[Number(input.dataset.pluginSettingsFeature)].enabled = input.checked;
+  }));
+  document.querySelector('[data-save-plugin-settings]')?.addEventListener('click', savePlugins);
 }
 
 function bindPlugins() {
@@ -616,7 +685,7 @@ async function saveNavigation() {
 
 async function savePlugins() {
   state.site.plugins = await api.updatePlugins(state.site.plugins);
-  showNotice('Plugins saved');
+  showNotice('Plugin settings saved');
 }
 
 function updateFeature(input, fieldName) {

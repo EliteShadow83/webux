@@ -41,15 +41,16 @@ const ecommerceFeatures = [
 ];
 
 const defaultPlugins = [
-  { id: 'forms', name: 'Forms', description: 'Build and embed lead capture, contact, and signup forms.', enabled: false },
-  { id: 'analytics', name: 'Analytics', description: 'Track page views, visitor behavior, and conversions.', enabled: false },
-  { id: 'blog', name: 'Blog', description: 'Publish articles, updates, categories, and author content.', enabled: false },
-  { id: 'payments', name: 'Payments', description: 'Accept one-time payments, invoices, and donation-style checkouts.', enabled: false },
+  { id: 'forms', name: 'Forms', description: 'Build and embed lead capture, contact, and signup forms.', enabled: false, settings: { recipientEmail: 'hello@example.com', successMessage: 'Thanks for reaching out!' } },
+  { id: 'analytics', name: 'Analytics', description: 'Track page views, visitor behavior, and conversions.', enabled: false, settings: { provider: 'Google Analytics', measurementId: '' } },
+  { id: 'blog', name: 'Blog', description: 'Publish articles, updates, categories, and author content.', enabled: false, settings: { postsPerPage: '10', showAuthors: true } },
+  { id: 'payments', name: 'Payments', description: 'Accept one-time payments, invoices, and donation-style checkouts.', enabled: false, settings: { currency: 'USD', testMode: true } },
   {
     id: 'ecommerce',
     name: 'Ecommerce',
     description: 'Manage products, inventory, orders, coupons, and shipping workflows.',
     enabled: false,
+    settings: { storeName: 'WebUX Store', inventoryAlerts: true, defaultShippingZone: 'Domestic' },
     features: ecommerceFeatures
   }
 ];
@@ -182,7 +183,8 @@ export function sanitizePlugin(input = {}) {
     id,
     name: String(input.name || 'Plugin').trim(),
     description: String(input.description || '').trim(),
-    enabled: Boolean(input.enabled)
+    enabled: Boolean(input.enabled),
+    settings: sanitizePluginSettings(id, input.settings)
   };
 
   if (id === 'ecommerce') {
@@ -198,6 +200,13 @@ function mergePlugins(plugins = []) {
     const match = incoming.find((candidate) => candidate.id === plugin.id) || {};
     return sanitizePlugin({ ...plugin, ...match });
   });
+}
+
+function sanitizePluginSettings(id, settings = {}) {
+  const defaults = defaultPlugins.find((plugin) => plugin.id === id)?.settings || {};
+  return Object.fromEntries(
+    Object.entries({ ...defaults, ...(settings || {}) }).map(([key, value]) => [key, typeof value === 'boolean' ? value : String(value)])
+  );
 }
 
 function mergeEcommerceFeatures(features = []) {

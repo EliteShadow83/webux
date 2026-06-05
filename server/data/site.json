@@ -114,25 +114,41 @@
       "id": "forms",
       "name": "Forms",
       "description": "Build and embed lead capture, contact, and signup forms.",
-      "enabled": false
+      "enabled": false,
+      "settings": {
+        "recipientEmail": "hello@example.com",
+        "successMessage": "Thanks for reaching out!"
+      }
     },
     {
       "id": "analytics",
       "name": "Analytics",
       "description": "Track page views, visitor behavior, and conversions.",
-      "enabled": false
+      "enabled": false,
+      "settings": {
+        "provider": "Google Analytics",
+        "measurementId": ""
+      }
     },
     {
       "id": "blog",
       "name": "Blog",
       "description": "Publish articles, updates, categories, and author content.",
-      "enabled": false
+      "enabled": false,
+      "settings": {
+        "postsPerPage": "10",
+        "showAuthors": true
+      }
     },
     {
       "id": "payments",
       "name": "Payments",
       "description": "Accept one-time payments, invoices, and donation-style checkouts.",
-      "enabled": false
+      "enabled": false,
+      "settings": {
+        "currency": "USD",
+        "testMode": true
+      }
     },
     {
       "id": "ecommerce",
@@ -165,7 +181,12 @@
           "name": "Shipping",
           "enabled": true
         }
-      ]
+      ],
+      "settings": {
+        "storeName": "WebUX Store",
+        "inventoryAlerts": true,
+        "defaultShippingZone": "Domestic"
+      }
     }
   ]
 }
