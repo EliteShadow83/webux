@@ -70,7 +70,7 @@ const defaultPluginData = {
   },
   blog: {
     posts: [
-      { id: 'post-welcome', title: 'Welcome to WebUX', slug: 'welcome-to-webux', author: 'Site Administrator', status: 'draft' }
+      { id: 'post-welcome', title: 'Welcome to WebUX', slug: 'welcome-to-webux', author: 'Site Administrator', status: 'draft', category: 'News' }
     ]
   },
   payments: {
@@ -80,7 +80,7 @@ const defaultPluginData = {
   },
   ecommerce: {
     products: [
-      { id: 'product-starter', name: 'Starter Kit', sku: 'STARTER-001', price: '49.00', status: 'active' }
+      { id: 'product-starter', name: 'Starter Kit', sku: 'STARTER-001', price: '49.00', status: 'active', category: 'Kits' }
     ],
     inventory: [
       { id: 'inventory-starter', sku: 'STARTER-001', location: 'Main warehouse', quantity: '25', threshold: '5' }

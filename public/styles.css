@@ -151,3 +151,9 @@ code { background: #eef2ff; border-radius: 7px; color: #3b45a0; padding: 2px 6px
 .plugin-data-page { display: grid; gap: 14px; }
 .plugin-data-row { align-items: end; background: #fbfcff; border: 1px solid #e6eaf2; border-radius: 20px; display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(120px, 1fr)) auto; padding: 14px; }
 @media (max-width: 900px) { .plugin-data-row { grid-template-columns: 1fr; } }
+.plugin-picker { background: #fff; border: 1px solid #e6eaf2; border-radius: 14px; display: grid; gap: 8px; max-height: 180px; overflow: auto; padding: 10px; }
+.plugin-content-grid { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.plugin-content-card { background: #fff; border: 1px solid #e5e9f1; border-radius: 22px; padding: 20px; }
+.plugin-content-card h3 { margin: 0 0 8px; }
+.plugin-content-card p, .plugin-content-card small { color: #667085; }
+@media (max-width: 900px) { .plugin-content-grid { grid-template-columns: 1fr; } }

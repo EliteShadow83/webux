@@ -72,6 +72,26 @@
           "type": "text",
           "headline": "A lightweight CMS starter",
           "body": "This project includes a file-backed Node.js API and a vanilla JavaScript frontend for managing custom pages. Use inline tokens like [[button:Start building|/admin|primary]] inside text fields, then extend it with authentication providers, media workflows, and database storage as your needs grow."
+        },
+        {
+          "id": "blog-feed-1",
+          "type": "pluginContent",
+          "headline": "Latest posts",
+          "plugin": "blog",
+          "mode": "feed",
+          "category": "",
+          "selectedIds": []
+        },
+        {
+          "id": "product-feature-1",
+          "type": "pluginContent",
+          "headline": "Featured products",
+          "plugin": "ecommerce",
+          "mode": "specific",
+          "category": "",
+          "selectedIds": [
+            "product-starter"
+          ]
         }
       ],
       "layout": "centered"
@@ -223,7 +243,8 @@
           "title": "Welcome to WebUX",
           "slug": "welcome-to-webux",
           "author": "Site Administrator",
-          "status": "draft"
+          "status": "draft",
+          "category": "News"
         }
       ]
     },
@@ -245,7 +266,8 @@
           "name": "Starter Kit",
           "sku": "STARTER-001",
           "price": "49.00",
-          "status": "active"
+          "status": "active",
+          "category": "Kits"
         }
       ],
       "inventory": [

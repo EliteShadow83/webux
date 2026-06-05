@@ -64,6 +64,14 @@ const sectionDefaults = {
     body: 'Link this CTA to a signup page, contact form, checkout, or another page.',
     buttonLabel: 'Get started',
     buttonUrl: '#'
+  },
+  pluginContent: {
+    type: 'pluginContent',
+    headline: 'Featured content',
+    plugin: 'blog',
+    mode: 'feed',
+    category: '',
+    selectedIds: []
   }
 };
 
@@ -472,6 +480,7 @@ function renderSectionEditor(section, index) {
       ${'buttonUrl' in section ? field(index, 'buttonUrl', section.buttonUrl, 'Button URL') : ''}
       ${section.type === 'features' ? renderFeatureEditor(section, index) : ''}
       ${section.type === 'gallery' ? renderGalleryEditor(section, index) : ''}
+      ${section.type === 'pluginContent' ? renderPluginContentEditor(section, index) : ''}
     </article>`;
 }
 
@@ -483,6 +492,22 @@ function renderFeatureEditor(section, sectionIndex) {
   return `<div class="nested-editor"><span>Features</span>${(section.items || []).map((item, itemIndex) => `
     <div class="feature-fields"><input data-feature-title="${sectionIndex}:${itemIndex}" value="${escapeHtml(item.title)}" /><textarea data-feature-body="${sectionIndex}:${itemIndex}">${escapeHtml(item.body)}</textarea></div>`).join('')}
     <button data-add-feature="${sectionIndex}">Add feature</button></div>`;
+}
+
+function renderPluginContentEditor(section, sectionIndex) {
+  const items = getPluginContentItems(section.plugin);
+  const categories = [...new Set(items.map((item) => item.category).filter(Boolean))];
+  return `<div class="nested-editor"><span>Plugin content</span>
+    <label>Content source<select data-plugin-content-field="${sectionIndex}:plugin"><option value="blog" ${section.plugin === 'blog' ? 'selected' : ''}>Blog posts</option><option value="ecommerce" ${section.plugin === 'ecommerce' ? 'selected' : ''}>Products</option></select></label>
+    <label>Display mode<select data-plugin-content-field="${sectionIndex}:mode"><option value="feed" ${section.mode === 'feed' ? 'selected' : ''}>Feed</option><option value="category" ${section.mode === 'category' ? 'selected' : ''}>Category</option><option value="specific" ${section.mode === 'specific' ? 'selected' : ''}>Specific items</option></select></label>
+    <label>Category<select data-plugin-content-field="${sectionIndex}:category"><option value="">All categories</option>${categories.map((category) => `<option value="${escapeHtml(category)}" ${section.category === category ? 'selected' : ''}>${escapeHtml(category)}</option>`).join('')}</select></label>
+    <div class="plugin-picker">${items.map((item) => `<label class="checkbox-label"><input type="checkbox" data-plugin-content-item="${sectionIndex}:${escapeHtml(item.id)}" ${(section.selectedIds || []).includes(item.id) ? 'checked' : ''} /> ${escapeHtml(item.title || item.name)}</label>`).join('') || '<p class="hint">No plugin records yet. Add posts or products from plugin pages.</p>'}</div>
+  </div>`;
+}
+
+function getPluginContentItems(plugin) {
+  if (plugin === 'ecommerce') return state.site.pluginData?.ecommerce?.products || [];
+  return state.site.pluginData?.blog?.posts || [];
 }
 
 function renderGalleryEditor(section, sectionIndex) {
@@ -522,7 +547,22 @@ function renderSection(section) {
   if (section.type === 'features') return `<section id="section-${escapeHtml(section.id || 'features')}" class="block"><h2>${escapeHtml(section.headline)}</h2><div class="feature-grid">${(section.items || []).map((item) => `<div class="feature"><h3>${escapeHtml(item.title)}</h3>${renderRichText(item.body)}</div>`).join('')}</div></section>`;
   if (section.type === 'gallery') return `<section id="section-${escapeHtml(section.id || 'gallery')}" class="block"><h2>${escapeHtml(section.headline)}</h2><div class="gallery">${(section.images || []).map((image, index) => `<img src="${escapeHtml(image)}" alt="${escapeHtml(section.headline || 'Gallery')} ${index + 1}" />`).join('')}</div></section>`;
   if (section.type === 'cta') return `<section id="section-${escapeHtml(section.id || 'cta')}" class="block cta-block"><h2>${escapeHtml(section.headline)}</h2>${renderRichText(section.body)}<a class="button" href="${escapeHtml(section.buttonUrl)}">${escapeHtml(section.buttonLabel)}</a></section>`;
+  if (section.type === 'pluginContent') return renderPluginContentSection(section);
   return `<section id="section-${escapeHtml(section.id || 'text')}" class="block text-block"><h2>${escapeHtml(section.headline)}</h2>${renderRichText(section.body)}</section>`;
+}
+
+function renderPluginContentSection(section) {
+  const items = getFilteredPluginItems(section);
+  const isProducts = section.plugin === 'ecommerce';
+  return `<section id="section-${escapeHtml(section.id || 'plugin-content')}" class="block plugin-content-block"><h2>${escapeHtml(section.headline)}</h2><div class="plugin-content-grid">${items.map((item) => `
+    <article class="plugin-content-card"><h3>${escapeHtml(item.title || item.name)}</h3>${isProducts ? `<p>SKU: ${escapeHtml(item.sku)} · $${escapeHtml(item.price)}</p>` : `<p>${escapeHtml(item.author)} · ${escapeHtml(item.status)}</p>`}${item.category ? `<small>${escapeHtml(item.category)}</small>` : ''}</article>`).join('') || '<p class="hint">No matching content found.</p>'}</div></section>`;
+}
+
+function getFilteredPluginItems(section) {
+  let items = getPluginContentItems(section.plugin);
+  if (section.mode === 'category' && section.category) items = items.filter((item) => item.category === section.category);
+  if (section.mode === 'specific') items = items.filter((item) => (section.selectedIds || []).includes(item.id));
+  return items;
 }
 
 function renderRichText(text = '') {
@@ -586,6 +626,19 @@ function bindContentManagement() {
   document.querySelectorAll('[data-add-feature]').forEach((button) => button.addEventListener('click', () => { selectedPage.sections[Number(button.dataset.addFeature)].items.push({ title: 'New feature', body: 'Describe this feature. [[button:Learn more|/learn|secondary]]' }); render(); }));
   document.querySelectorAll('[data-gallery-image]').forEach((input) => input.addEventListener('input', () => { const [sectionIndex, imageIndex] = input.dataset.galleryImage.split(':').map(Number); selectedPage.sections[sectionIndex].images[imageIndex] = input.value; render(); }));
   document.querySelectorAll('[data-add-image]').forEach((button) => button.addEventListener('click', () => { selectedPage.sections[Number(button.dataset.addImage)].images.push(state.site.media?.[0]?.url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80'); render(); }));
+  document.querySelectorAll('[data-plugin-content-field]').forEach((input) => input.addEventListener('change', () => {
+    const [sectionIndex, field] = input.dataset.pluginContentField.split(':');
+    const section = selectedPage.sections[Number(sectionIndex)];
+    section[field] = input.value;
+    if (field === 'plugin') { section.category = ''; section.selectedIds = []; }
+    render();
+  }));
+  document.querySelectorAll('[data-plugin-content-item]').forEach((input) => input.addEventListener('change', () => {
+    const [sectionIndex, itemId] = input.dataset.pluginContentItem.split(':');
+    const section = selectedPage.sections[Number(sectionIndex)];
+    section.selectedIds = section.selectedIds || [];
+    section.selectedIds = input.checked ? [...new Set([...section.selectedIds, itemId])] : section.selectedIds.filter((id) => id !== itemId);
+  }));
 }
 
 function bindTheme() {
