@@ -518,6 +518,8 @@ function renderGalleryEditor(section, sectionIndex) {
 function renderPublicSite() {
   const slug = getSlugFromLocation();
   if (slug === 'cart') return renderCartPage();
+  if (slug === 'checkout') return renderCheckoutPage();
+  if (slug.startsWith('products/')) return renderProductPage(slug.split('/')[1]);
   const page = state.site.pages.find((candidate) => candidate.slug === slug && candidate.status === 'published') || state.site.pages.find((candidate) => candidate.slug === 'home') || state.site.pages[0];
   const navigation = getPublicNavigation();
   return `
@@ -530,7 +532,7 @@ function renderPublicSite() {
 function getPublicNavigation() {
   const navigation = (state.site.navigation || []).filter((item) => item.visible);
   return isEcommerceEnabled() && !navigation.some((item) => item.url === '/cart')
-    ? [...navigation, { id: 'nav-cart', label: `Cart (${getCartCount()})`, url: '/cart', visible: true }]
+    ? [...navigation, { id: 'nav-cart', label: `Cart (${getCartCount()})`, url: '/cart', visible: true }, { id: 'nav-checkout', label: 'Checkout', url: '/checkout', visible: true }]
     : navigation;
 }
 
@@ -539,7 +541,26 @@ function renderCartPage() {
   const total = cartItems.reduce((sum, item) => sum + Number(item.product.price || 0) * item.quantity, 0).toFixed(2);
   return `<main>
     <section class="site-hero-strip"><p>${escapeHtml(state.site.settings.siteName)}</p><div>${getPublicNavigation().map((item) => `<a href="${escapeHtml(item.url)}">${escapeHtml(item.label)}</a>`).join('')}</div></section>
-    <section class="block cart-page"><h1>Cart</h1>${cartItems.length ? `<div class="cart-list">${cartItems.map((item) => `<article class="cart-row">${item.product.image ? `<img src="${escapeHtml(item.product.image)}" alt="${escapeHtml(item.product.name)}" />` : ''}<div><h2>${escapeHtml(item.product.name)}</h2><p>${escapeHtml(item.product.sku)} · $${escapeHtml(item.product.price)} · Qty ${item.quantity}</p></div><button class="text-button" data-cart-remove="${escapeHtml(item.id)}">Remove</button></article>`).join('')}</div><div class="cart-total"><strong>Total: $${total}</strong><button class="primary-action">Checkout</button></div>` : '<p class="hint">Your cart is empty.</p>'}</section>
+    <section class="block cart-page"><h1>Cart</h1>${cartItems.length ? `<div class="cart-list">${cartItems.map((item) => `<article class="cart-row">${item.product.image ? `<img src="${escapeHtml(item.product.image)}" alt="${escapeHtml(item.product.name)}" />` : ''}<div><h2>${escapeHtml(item.product.name)}</h2><p>${escapeHtml(item.product.sku)} · $${escapeHtml(item.product.price)}</p><label class="quantity-control">Qty <input type="number" min="1" data-cart-qty="${escapeHtml(item.id)}" value="${item.quantity}" /></label></div><button class="text-button" data-cart-remove="${escapeHtml(item.id)}">Remove</button></article>`).join('')}</div><div class="cart-total"><strong>Total: $${total}</strong><a class="primary-action" href="/checkout">Checkout</a></div>` : '<p class="hint">Your cart is empty.</p>'}</section>
+  </main>`;
+}
+
+function renderProductPage(productId) {
+  const product = getPluginContentItems('ecommerce').find((item) => item.id === productId || item.sku === productId);
+  if (!product) return `<main><section class="block empty-state">Product not found.</section></main>`;
+  return `<main>
+    <section class="site-hero-strip"><p>${escapeHtml(state.site.settings.siteName)}</p><div>${getPublicNavigation().map((item) => `<a href="${escapeHtml(item.url)}">${escapeHtml(item.label)}</a>`).join('')}</div></section>
+    <section class="block product-page"><div>${product.image ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" />` : ''}</div><div><p class="eyebrow">${escapeHtml(product.category || 'Product')}</p><h1>${escapeHtml(product.name)}</h1><p>${escapeHtml(product.description || '')}</p><strong>$${escapeHtml(product.price)}</strong><label class="quantity-control">Qty <input type="number" min="1" data-product-qty="${escapeHtml(product.id)}" value="1" /></label><button class="primary-action" data-add-cart="${escapeHtml(product.id)}">Add to cart</button></div></section>
+  </main>`;
+}
+
+function renderCheckoutPage() {
+  const payments = state.site.plugins.find((plugin) => plugin.id === 'payments');
+  const cartItems = state.cart.map((item) => ({ ...item, product: getPluginContentItems('ecommerce').find((product) => product.id === item.id) })).filter((item) => item.product);
+  const total = cartItems.reduce((sum, item) => sum + Number(item.product.price || 0) * item.quantity, 0).toFixed(2);
+  return `<main>
+    <section class="site-hero-strip"><p>${escapeHtml(state.site.settings.siteName)}</p><div>${getPublicNavigation().map((item) => `<a href="${escapeHtml(item.url)}">${escapeHtml(item.label)}</a>`).join('')}</div></section>
+    <section class="block checkout-page"><h1>Checkout</h1>${payments?.enabled ? `<p>Payments plugin enabled · Currency ${escapeHtml(payments.settings?.currency || 'USD')} · ${payments.settings?.testMode ? 'Test mode' : 'Live mode'}</p>` : '<p class="hint">Enable the Payments plugin to process checkout.</p>'}<div class="cart-list">${cartItems.map((item) => `<article class="cart-row"><div><h2>${escapeHtml(item.product.name)}</h2><p>Qty ${item.quantity} · $${escapeHtml(item.product.price)}</p></div></article>`).join('') || '<p class="hint">Your cart is empty.</p>'}</div><div class="cart-total"><strong>Total: $${total}</strong><button class="primary-action" ${payments?.enabled && cartItems.length ? '' : 'disabled'}>Place order</button></div></section>
   </main>`;
 }
 
@@ -573,7 +594,7 @@ function renderPluginContentSection(section) {
   const items = getFilteredPluginItems(section);
   const isProducts = section.plugin === 'ecommerce';
   return `<section id="section-${escapeHtml(section.id || 'plugin-content')}" class="block plugin-content-block"><h2>${escapeHtml(section.headline)}</h2><div class="plugin-content-grid">${items.map((item) => `
-    <article class="plugin-content-card">${isProducts && item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" />` : ''}<h3>${escapeHtml(item.title || item.name)}</h3>${isProducts ? `<p>SKU: ${escapeHtml(item.sku)} · $${escapeHtml(item.price)}</p>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}${isEcommerceEnabled() ? `<button class="primary-action" data-add-cart="${escapeHtml(item.id)}">Add to cart</button>` : ''}` : `<p>${escapeHtml(item.author)} · ${escapeHtml(item.status)}</p>`}${item.category ? `<small>${escapeHtml(item.category)}</small>` : ''}</article>`).join('') || '<p class="hint">No matching content found.</p>'}</div></section>`;
+    <article class="plugin-content-card">${isProducts && item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" />` : ''}<h3>${isProducts ? `<a href="/products/${escapeHtml(item.id)}">${escapeHtml(item.name)}</a>` : escapeHtml(item.title || item.name)}</h3>${isProducts ? `<p>SKU: ${escapeHtml(item.sku)} · $${escapeHtml(item.price)}</p>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}${isEcommerceEnabled() ? `<label class="quantity-control">Qty <input type="number" min="1" data-product-qty="${escapeHtml(item.id)}" value="1" /></label><button class="primary-action" data-add-cart="${escapeHtml(item.id)}">Add to cart</button>` : ''}` : `<p>${escapeHtml(item.author)} · ${escapeHtml(item.status)}</p>`}${item.category ? `<small>${escapeHtml(item.category)}</small>` : ''}</article>`).join('') || '<p class="hint">No matching content found.</p>'}</div></section>`;
 }
 
 function isEcommerceEnabled() {
@@ -627,6 +648,7 @@ function bindNavigation() {
   document.querySelector('[data-logout]')?.addEventListener('click', logout);
   document.querySelectorAll('[data-add-cart]').forEach((button) => button.addEventListener('click', () => addToCart(button.dataset.addCart)));
   document.querySelectorAll('[data-cart-remove]').forEach((button) => button.addEventListener('click', () => removeFromCart(button.dataset.cartRemove)));
+  document.querySelectorAll('[data-cart-qty]').forEach((input) => input.addEventListener('change', () => updateCartQuantity(input.dataset.cartQty, input.value)));
 }
 
 function bindAdmin() {
@@ -793,11 +815,19 @@ function showError(message) {
 }
 
 function addToCart(productId) {
+  const quantity = Math.max(1, Number(document.querySelector(`[data-product-qty="${CSS.escape(productId)}"]`)?.value || 1));
   const existing = state.cart.find((item) => item.id === productId);
-  if (existing) existing.quantity += 1;
-  else state.cart.push({ id: productId, quantity: 1 });
+  if (existing) existing.quantity += quantity;
+  else state.cart.push({ id: productId, quantity });
   saveCart();
   showNotice('Added to cart');
+}
+
+function updateCartQuantity(productId, quantity) {
+  const item = state.cart.find((candidate) => candidate.id === productId);
+  if (item) item.quantity = Math.max(1, Number(quantity || 1));
+  saveCart();
+  render();
 }
 
 function removeFromCart(productId) {

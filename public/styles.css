@@ -169,3 +169,11 @@ code { background: #eef2ff; border-radius: 7px; color: #3b45a0; padding: 2px 6px
 .cart-row h2 { margin: 0 0 6px; }
 .cart-total { align-items: center; display: flex; gap: 14px; justify-content: flex-end; }
 @media (max-width: 720px) { .cart-row { grid-template-columns: 1fr; } .cart-total { align-items: flex-start; flex-direction: column; } }
+.product-page { align-items: center; display: grid; gap: clamp(24px, 5vw, 60px); grid-template-columns: minmax(260px, .9fr) minmax(300px, 1.1fr); }
+.product-page img { border-radius: 28px; object-fit: cover; width: 100%; }
+.product-page h1, .checkout-page h1 { font-size: clamp(2.8rem, 7vw, 5.8rem); line-height: 1; margin: 10px 0 18px; }
+.product-page strong { display: block; font-size: 2rem; margin: 16px 0; }
+.quantity-control { align-items: center; display: inline-flex; flex-direction: row; gap: 10px; margin: 10px 12px 10px 0; }
+.quantity-control input { max-width: 90px; }
+.checkout-page .primary-action:disabled { cursor: not-allowed; filter: grayscale(1); opacity: .5; }
+@media (max-width: 900px) { .product-page { grid-template-columns: 1fr; } }
