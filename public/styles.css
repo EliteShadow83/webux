@@ -180,3 +180,12 @@ code { background: #eef2ff; border-radius: 7px; color: #3b45a0; padding: 2px 6px
 .blog-post-page { background: #fff; margin: 0 auto; max-width: 980px; }
 .blog-post-page h1 { font-size: clamp(3rem, 8vw, 6rem); line-height: 1; margin: 10px 0 18px; }
 .post-meta { color: #667085; font-weight: 800; }
+.wide-field { grid-column: 1 / -1; }
+.rich-text-area { min-height: 240px; line-height: 1.6; }
+.format-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.format-toolbar button { background: #fff; border: 1px solid #dfe4ee; border-radius: 999px; color: #424b61; font-size: .86rem; font-weight: 800; padding: 7px 11px; }
+.rich-text-output { color: #5f687c; font-size: 1.05rem; line-height: 1.75; max-width: 780px; }
+.rich-text-output h1, .rich-text-output h2, .rich-text-output h3 { color: #202637; line-height: 1.1; margin: 18px 0 8px; }
+.rich-text-output ul { margin: 12px 0; padding-left: 22px; }
+.rich-text-output a { color: var(--primary); font-weight: 800; }
+.plugin-content-card .rich-text-output { font-size: .98rem; line-height: 1.55; }

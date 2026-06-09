@@ -416,14 +416,14 @@ function getPluginPageConfig(pluginId, pageId) {
       dashboards: { title: 'Analytics Dashboard', description: 'Track metrics surfaced by your analytics plugin.', collection: 'dashboards', addLabel: 'New metric', fields: [['metric', 'Metric'], ['value', 'Value'], ['period', 'Period']], defaults: { metric: 'New metric', value: '0', period: 'Today' } }
     },
     blog: {
-      posts: { title: 'Blog Posts', description: 'Create and manage blog posts.', collection: 'posts', addLabel: 'New post', fields: [['title', 'Title'], ['slug', 'Slug'], ['author', 'Author'], ['status', 'Status'], ['category', 'Category'], ['content', 'Content']], multiline: ['content'], defaults: { title: 'New post', slug: 'new-post', author: 'Site Administrator', status: 'draft', category: '', content: '' } }
+      posts: { title: 'Blog Posts', description: 'Create and manage blog posts.', collection: 'posts', addLabel: 'New post', fields: [['title', 'Title'], ['slug', 'Slug'], ['author', 'Author'], ['status', 'Status'], ['category', 'Category'], ['content', 'Content']], multiline: ['content'], formatFields: ['content'], defaults: { title: 'New post', slug: 'new-post', author: 'Site Administrator', status: 'draft', category: '', content: '' } }
     },
     payments: {
       links: { title: 'Payment Links', description: 'Create reusable payment links.', collection: 'links', addLabel: 'New payment link', fields: [['name', 'Name'], ['amount', 'Amount'], ['currency', 'Currency'], ['status', 'Status']], defaults: { name: 'New payment link', amount: '0.00', currency: 'USD', status: 'active' } }
     },
     ecommerce: {
-      products: { title: 'Products', description: 'Create and edit products for your storefront.', collection: 'products', addLabel: 'New product', fields: [['name', 'Name'], ['sku', 'SKU'], ['price', 'Price'], ['status', 'Status'], ['category', 'Category'], ['description', 'Description'], ['image', 'Image URL']], defaults: { name: 'New product', sku: 'SKU-001', price: '0.00', status: 'active', category: '', description: '', image: '' } },
-      inventory: { title: 'Inventory', description: 'Track stock levels and reorder thresholds.', collection: 'inventory', addLabel: 'New inventory row', fields: [['sku', 'SKU'], ['location', 'Location'], ['quantity', 'Quantity'], ['threshold', 'Threshold'], ['description', 'Description'], ['image', 'Image URL']], defaults: { sku: 'SKU-001', location: 'Main warehouse', quantity: '0', threshold: '0', description: '', image: '' } },
+      products: { title: 'Products', description: 'Create and edit products for your storefront.', collection: 'products', addLabel: 'New product', fields: [['name', 'Name'], ['sku', 'SKU'], ['price', 'Price'], ['status', 'Status'], ['category', 'Category'], ['description', 'Description'], ['image', 'Image URL']], multiline: ['description'], formatFields: ['description'], defaults: { name: 'New product', sku: 'SKU-001', price: '0.00', status: 'active', category: '', description: '', image: '' } },
+      inventory: { title: 'Inventory', description: 'Track stock levels and reorder thresholds.', collection: 'inventory', addLabel: 'New inventory row', fields: [['sku', 'SKU'], ['location', 'Location'], ['quantity', 'Quantity'], ['threshold', 'Threshold'], ['description', 'Description'], ['image', 'Image URL']], multiline: ['description'], formatFields: ['description'], defaults: { sku: 'SKU-001', location: 'Main warehouse', quantity: '0', threshold: '0', description: '', image: '' } },
       orders: { title: 'Orders', description: 'View and update customer orders.', collection: 'orders', addLabel: 'New order', fields: [['orderNumber', 'Order #'], ['customer', 'Customer'], ['total', 'Total'], ['status', 'Status']], defaults: { orderNumber: '#1002', customer: 'New customer', total: '0.00', status: 'pending' } },
       coupons: { title: 'Coupons', description: 'Create discounts and coupon codes.', collection: 'coupons', addLabel: 'New coupon', fields: [['code', 'Code'], ['discount', 'Discount'], ['status', 'Status'], ['expires', 'Expires']], defaults: { code: 'SAVE10', discount: '10%', status: 'active', expires: '2026-12-31' } },
       shipping: { title: 'Shipping', description: 'Configure shipping zones, methods, and rates.', collection: 'shipping', addLabel: 'New shipping method', fields: [['zone', 'Zone'], ['method', 'Method'], ['rate', 'Rate'], ['status', 'Status']], defaults: { zone: 'Domestic', method: 'Standard', rate: '0.00', status: 'active' } }
@@ -443,10 +443,30 @@ function renderPluginFeaturePage(pluginId, pageId) {
     <section class="panel-card plugin-data-page">
       ${items.map((item, itemIndex) => `
         <article class="plugin-data-row">
-          ${config.fields.map(([field, label]) => `<label>${escapeHtml(label)}${config.multiline?.includes(field) ? `<textarea data-plugin-data-field="${pluginId}:${config.collection}:${itemIndex}:${field}">${escapeHtml(item[field])}</textarea>` : `<input data-plugin-data-field="${pluginId}:${config.collection}:${itemIndex}:${field}" value="${escapeHtml(item[field])}" />`}</label>`).join('')}
+          ${config.fields.map(([field, label]) => renderPluginDataField(config, pluginId, itemIndex, item, field, label)).join('')}
           <button class="text-button" data-plugin-data-remove="${pluginId}:${config.collection}:${itemIndex}">Remove</button>
         </article>`).join('') || '<p class="hint">No records yet. Add one to get started.</p>'}
     </section>`;
+}
+
+function renderPluginDataField(config, pluginId, itemIndex, item, field, label) {
+  const fieldKey = `${pluginId}:${config.collection}:${itemIndex}:${field}`;
+  if (!config.multiline?.includes(field)) {
+    return `<label>${escapeHtml(label)}<input data-plugin-data-field="${fieldKey}" value="${escapeHtml(item[field])}" /></label>`;
+  }
+
+  const toolbar = config.formatFields?.includes(field) ? renderFormatToolbar(fieldKey) : '';
+  return `<label class="wide-field">${escapeHtml(label)}${toolbar}<textarea class="rich-text-area" data-plugin-data-field="${fieldKey}">${escapeHtml(item[field])}</textarea></label>`;
+}
+
+function renderFormatToolbar(fieldKey) {
+  return `<div class="format-toolbar">
+    <button type="button" data-format-field="${fieldKey}" data-format="heading">Heading</button>
+    <button type="button" data-format-field="${fieldKey}" data-format="bold">Bold</button>
+    <button type="button" data-format-field="${fieldKey}" data-format="italic">Italic</button>
+    <button type="button" data-format-field="${fieldKey}" data-format="list">List</button>
+    <button type="button" data-format-field="${fieldKey}" data-format="link">Link</button>
+  </div>`;
 }
 
 function renderPageEditor(page) {
@@ -551,7 +571,7 @@ function renderProductPage(productId) {
   if (!product) return `<main><section class="block empty-state">Product not found.</section></main>`;
   return `<main>
     <section class="site-hero-strip"><p>${escapeHtml(state.site.settings.siteName)}</p><div>${getPublicNavigation().map((item) => `<a href="${escapeHtml(item.url)}">${escapeHtml(item.label)}</a>`).join('')}</div></section>
-    <section class="block product-page"><div>${product.image ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" />` : ''}</div><div><p class="eyebrow">${escapeHtml(product.category || 'Product')}</p><h1>${escapeHtml(product.name)}</h1><p>${escapeHtml(product.description || '')}</p><strong>$${escapeHtml(product.price)}</strong><label class="quantity-control">Qty <input type="number" min="1" data-product-qty="${escapeHtml(product.id)}" value="1" /></label><button class="primary-action" data-add-cart="${escapeHtml(product.id)}">Add to cart</button></div></section>
+    <section class="block product-page"><div>${product.image ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" />` : ''}</div><div><p class="eyebrow">${escapeHtml(product.category || 'Product')}</p><h1>${escapeHtml(product.name)}</h1>${renderRichText(product.description || '')}<strong>$${escapeHtml(product.price)}</strong><label class="quantity-control">Qty <input type="number" min="1" data-product-qty="${escapeHtml(product.id)}" value="1" /></label><button class="primary-action" data-add-cart="${escapeHtml(product.id)}">Add to cart</button></div></section>
   </main>`;
 }
 
@@ -604,7 +624,7 @@ function renderPluginContentSection(section) {
   const items = getFilteredPluginItems(section);
   const isProducts = section.plugin === 'ecommerce';
   return `<section id="section-${escapeHtml(section.id || 'plugin-content')}" class="block plugin-content-block"><h2>${escapeHtml(section.headline)}</h2><div class="plugin-content-grid">${items.map((item) => `
-    <article class="plugin-content-card">${isProducts && item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" />` : ''}<h3>${isProducts ? `<a href="/products/${escapeHtml(item.id)}">${escapeHtml(item.name)}</a>` : `<a href="/blog/${escapeHtml(item.slug || item.id)}">${escapeHtml(item.title || item.name)}</a>`}</h3>${isProducts ? `<p>SKU: ${escapeHtml(item.sku)} · $${escapeHtml(item.price)}</p>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}${isEcommerceEnabled() ? `<label class="quantity-control">Qty <input type="number" min="1" data-product-qty="${escapeHtml(item.id)}" value="1" /></label><button class="primary-action" data-add-cart="${escapeHtml(item.id)}">Add to cart</button>` : ''}` : `<p>${escapeHtml(item.author)} · ${escapeHtml(item.status)}</p>`}${item.category ? `<small>${escapeHtml(item.category)}</small>` : ''}</article>`).join('') || '<p class="hint">No matching content found.</p>'}</div></section>`;
+    <article class="plugin-content-card">${isProducts && item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" />` : ''}<h3>${isProducts ? `<a href="/products/${escapeHtml(item.id)}">${escapeHtml(item.name)}</a>` : `<a href="/blog/${escapeHtml(item.slug || item.id)}">${escapeHtml(item.title || item.name)}</a>`}</h3>${isProducts ? `<p>SKU: ${escapeHtml(item.sku)} · $${escapeHtml(item.price)}</p>${item.description ? renderRichText(item.description) : ''}${isEcommerceEnabled() ? `<label class="quantity-control">Qty <input type="number" min="1" data-product-qty="${escapeHtml(item.id)}" value="1" /></label><button class="primary-action" data-add-cart="${escapeHtml(item.id)}">Add to cart</button>` : ''}` : `<p>${escapeHtml(item.author)} · ${escapeHtml(item.status)}</p>`}${item.category ? `<small>${escapeHtml(item.category)}</small>` : ''}</article>`).join('') || '<p class="hint">No matching content found.</p>'}</div></section>`;
 }
 
 function isEcommerceEnabled() {
@@ -639,13 +659,44 @@ function renderRichText(text = '') {
   let html = '';
   let cursor = 0;
   for (const match of text.matchAll(tokenPattern)) {
-    html += escapeHtml(text.slice(cursor, match.index)).replaceAll('\n', '<br />');
+    html += formatRichTextChunk(text.slice(cursor, match.index));
     const variant = match[3] === 'secondary' ? 'secondary' : 'primary';
     html += `<a class="inline-button ${variant}" href="${escapeHtml(match[2])}">${escapeHtml(match[1])}</a>`;
     cursor = match.index + match[0].length;
   }
-  html += escapeHtml(text.slice(cursor)).replaceAll('\n', '<br />');
-  return `<p>${html}</p>`;
+  html += formatRichTextChunk(text.slice(cursor));
+  return `<div class="rich-text-output">${html}</div>`;
+}
+
+function formatRichTextChunk(text = '') {
+  const lines = text.split('\n');
+  let html = '';
+  let inList = false;
+  const closeList = () => { if (inList) { html += '</ul>'; inList = false; } };
+
+  lines.forEach((line) => {
+    if (line.startsWith('- ')) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += `<li>${formatInlineText(line.slice(2))}</li>`;
+      return;
+    }
+
+    closeList();
+    if (line.startsWith('### ')) html += `<h3>${formatInlineText(line.slice(4))}</h3>`;
+    else if (line.startsWith('## ')) html += `<h2>${formatInlineText(line.slice(3))}</h2>`;
+    else if (line.startsWith('# ')) html += `<h1>${formatInlineText(line.slice(2))}</h1>`;
+    else if (line.trim()) html += `<p>${formatInlineText(line)}</p>`;
+  });
+
+  closeList();
+  return html;
+}
+
+function formatInlineText(text = '') {
+  return escapeHtml(text)
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
 }
 
 function bindNavigation() {
@@ -759,6 +810,28 @@ function bindPluginFeaturePage() {
     const [pluginId, collectionName, itemIndex, field] = input.dataset.pluginDataField.split(':');
     ensurePluginCollection(pluginId, collectionName)[Number(itemIndex)][field] = input.value;
   }));
+  document.querySelectorAll('[data-format-field]').forEach((button) => button.addEventListener('click', () => applyFormatting(button.dataset.formatField, button.dataset.format)));
+}
+
+function applyFormatting(fieldKey, format) {
+  const textarea = [...document.querySelectorAll('[data-plugin-data-field]')].find((input) => input.dataset.pluginDataField === fieldKey);
+  if (!textarea) return;
+
+  const snippets = {
+    heading: '# Heading',
+    bold: '**bold text**',
+    italic: '*italic text*',
+    list: '- First item\n- Second item',
+    link: '[link text](https://example.com)'
+  };
+  const start = textarea.selectionStart ?? textarea.value.length;
+  const end = textarea.selectionEnd ?? textarea.value.length;
+  const selected = textarea.value.slice(start, end);
+  const insert = selected && ['bold', 'italic'].includes(format)
+    ? (format === 'bold' ? `**${selected}**` : `*${selected}*`)
+    : snippets[format];
+  textarea.value = `${textarea.value.slice(0, start)}${insert}${textarea.value.slice(end)}`;
+  textarea.dispatchEvent(new Event('input'));
 }
 
 function ensurePluginCollection(pluginId, collectionName) {

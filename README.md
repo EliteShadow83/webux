@@ -16,9 +16,9 @@ WebUX CMS is a WordPress-inspired full-stack starter for building customizable m
 - Build public navigation links and toggle Forms, Analytics, Blog, Payments, and Ecommerce plugins from the dedicated Plugins section.
 - Configure Ecommerce plugin features for Products, Inventory, Orders, Coupons, and Shipping.
 - Open a dedicated settings page for every enabled plugin from the admin left navigation.
-- Use enabled plugin feature pages for Forms, Analytics dashboards, Blog posts with editable content, Payment links, and Ecommerce Products, Inventory, Orders, Coupons, and Shipping.
+- Use enabled plugin feature pages for Forms, Analytics dashboards, Blog posts with large formatted content fields, Payment links, and Ecommerce Products, Inventory, Orders, Coupons, and Shipping.
 - Insert blog posts or products into Content Management pages as feeds, category lists, or specific selected items, and read blog posts on standalone `/blog/:slug` pages.
-- Attach descriptions and image URLs to Ecommerce products and inventory records.
+- Attach larger formatted descriptions and image URLs to Ecommerce products and inventory records.
 - Show Add to cart buttons, product detail pages, editable cart quantities, and a Payments-powered checkout page when Ecommerce is enabled.
 - Protect admin editing routes with a simple session login.
 - Serve the frontend and JSON API from the same backend.

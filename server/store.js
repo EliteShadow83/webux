@@ -70,7 +70,7 @@ const defaultPluginData = {
   },
   blog: {
     posts: [
-      { id: 'post-welcome', title: 'Welcome to WebUX', slug: 'welcome-to-webux', author: 'Site Administrator', status: 'draft', category: 'News', content: 'This first post introduces the WebUX CMS starter and shows how blog content can be managed from the plugin pages.' }
+      { id: 'post-welcome', title: 'Welcome to WebUX', slug: 'welcome-to-webux', author: 'Site Administrator', status: 'draft', category: 'News', content: '# Welcome to WebUX\nThis first post introduces the **WebUX CMS starter** and shows how blog content can be managed from the plugin pages.\n- Create rich posts\n- Link to [your site](/home)\n[[button:Open admin|/admin|primary]]' }
     ]
   },
   payments: {
@@ -80,7 +80,7 @@ const defaultPluginData = {
   },
   ecommerce: {
     products: [
-      { id: 'product-starter', name: 'Starter Kit', sku: 'STARTER-001', price: '49.00', status: 'active', category: 'Kits', description: 'A starter bundle for launching your first storefront.', image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80' }
+      { id: 'product-starter', name: 'Starter Kit', sku: 'STARTER-001', price: '49.00', status: 'active', category: 'Kits', description: '## Starter Kit includes\nA starter bundle for launching your first storefront with **ready-made content blocks**.\n- Product page support\n- Cart and checkout flow', image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80' }
     ],
     inventory: [
       { id: 'inventory-starter', sku: 'STARTER-001', location: 'Main warehouse', quantity: '25', threshold: '5', description: 'Starter Kit inventory for boxed launch bundles.', image: 'https://images.unsplash.com/photo-1581091215367-59ab6b01f302?auto=format&fit=crop&w=900&q=80' }
